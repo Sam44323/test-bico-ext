@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
-import { ethers } from "ethers";
-import SocialLogin from "@biconomy/web3-auth";
-import SmartAccount from "@biconomy/smart-account";
-import { ChainId } from "@biconomy/core-types";
+import * as React from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { ethers } from 'ethers';
+import SocialLogin from '@biconomy/web3-auth';
+import SmartAccount from '@biconomy/smart-account';
+import { ChainId } from '@biconomy/core-types';
 
 const Auth: React.FC<{
   children?: React.ReactNode;
@@ -32,21 +33,14 @@ const Auth: React.FC<{
   async function login() {
     if (!sdkRef.current) {
       const socialLoginSDK = new SocialLogin();
-      // const signature1 = await socialLoginSDK.whitelistUrl(
-      //   "http://localhost:3000/auth"
-      // );
       await socialLoginSDK.init({
         chainId: ethers.utils.hexValue(ChainId.POLYGON_MUMBAI),
-        // whitelistUrls: {
-        //   "http://localhost:3000/auth": signature1,
-        // },
       });
       sdkRef.current = socialLoginSDK;
     }
     if (!sdkRef.current.provider) {
-      // sdkRef.current.showConnectModal()
-      sdkRef.current.showWallet();
       enableInterval(true);
+      sdkRef.current.showWallet();
     } else {
       setupSmartAccount();
     }
@@ -54,8 +48,8 @@ const Auth: React.FC<{
 
   async function setupSmartAccount() {
     if (!sdkRef?.current?.provider) return;
-    sdkRef.current.hideWallet();
     setLoading(true);
+    sdkRef.current.hideWallet();
     const web3Provider = new ethers.providers.Web3Provider(
       sdkRef.current.provider
     );
@@ -69,22 +63,33 @@ const Auth: React.FC<{
       setSmartAccount(smartAccount);
       setLoading(false);
     } catch (err) {
-      console.log("error setting up smart account... ", err);
+      console.log('error setting up smart account... ', err);
     }
   }
 
-  const logout = async () => {
+  async function logout() {
     if (!sdkRef.current) {
-      console.error("Web3Modal not initialized.");
+      console.error('Web3Modal not initialized.');
       return;
     }
     await sdkRef.current.logout();
     sdkRef.current.hideWallet();
     setSmartAccount(null);
     enableInterval(false);
-  };
+  }
 
-  return <button onClick={login}>click</button>;
+  return (
+    <>
+      {smartAccount ? (
+        <>
+          <h3>Smart account address: {smartAccount.address}</h3>
+          <button onClick={logout}>Logout</button>
+        </>
+      ) : (
+        <button onClick={login}>Click to Login</button>
+      )}
+    </>
+  );
 };
 
 export default Auth;
